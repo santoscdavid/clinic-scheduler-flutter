@@ -14,4 +14,8 @@ class DoctorModel {
       specialty: SpecialtyModel.fromJson(json['specialty']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'specialty': specialty.toJson()};
+  }
 }

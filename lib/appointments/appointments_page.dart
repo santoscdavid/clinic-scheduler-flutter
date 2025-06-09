@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import 'controller/appointments_controller.dart';
 import 'services/appointments_services.dart';
@@ -116,30 +117,50 @@ class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
                       style: TextStyle(color: Colors.red),
                     ),
                   if (!controller.isLoading && controller.error == null)
-                    Expanded(
-                      child: ListView(
-                        shrinkWrap: true,
-                        children:
+                    Builder(
+                      builder: (context) {
+                        final filteredAppointments =
                             controller.appointments
-                                .where((a) => !a.booked)
-                                .map(
-                                  (
-                                    appointment,
-                                  ) => RadioListTile<AppointmentModel>(
-                                    title: Text(
-                                      'Data: ${appointment.date.day}/${appointment.date.month}/${appointment.date.year}',
-                                    ),
-                                    value: appointment,
-                                    groupValue: _selectedAppointment,
-                                    onChanged: (AppointmentModel? value) {
-                                      setState(() {
-                                        _selectedAppointment = value;
-                                      });
-                                    },
-                                  ),
+                                .where(
+                                  (a) =>
+                                      !a.booked &&
+                                      (widget.doctor == null ||
+                                          a.doctorId == widget.doctor!.id),
                                 )
-                                .toList(),
-                      ),
+                                .toList();
+                        if (filteredAppointments.isEmpty) {
+                          return const Text(
+                            'Não há horários disponíveis.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          );
+                        }
+                        return Expanded(
+                          child: ListView(
+                            shrinkWrap: true,
+                            children:
+                                filteredAppointments
+                                    .map(
+                                      (
+                                        appointment,
+                                      ) => RadioListTile<AppointmentModel>(
+                                        title: Text(
+                                          'Data: '
+                                          '${DateFormat('dd/MM/yy').format(appointment.date)}  '
+                                          'Hora: ${DateFormat('HH:mm').format(appointment.date)}',
+                                        ),
+                                        value: appointment,
+                                        groupValue: _selectedAppointment,
+                                        onChanged: (AppointmentModel? value) {
+                                          setState(() {
+                                            _selectedAppointment = value;
+                                          });
+                                        },
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                        );
+                      },
                     ),
                   SizedBox(height: 80),
                 ],
@@ -173,7 +194,9 @@ class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Consulta agendada para ${_selectedAppointment!.date.day}/${_selectedAppointment!.date.month}/${_selectedAppointment!.date.year}',
+                                  'Consulta agendada para '
+                                  '${DateFormat('dd/MM/yy').format(_selectedAppointment!.date)}  '
+                                  'Hora: ${DateFormat('HH:mm').format(_selectedAppointment!.date)}',
                                 ),
                               ),
                             );

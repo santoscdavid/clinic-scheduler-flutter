@@ -11,7 +11,7 @@ class BookAppointmentService {
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'userId': userId}),
+      body: jsonEncode({'patientId': userId}),
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       return true;
