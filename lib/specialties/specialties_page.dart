@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'services/specialties_service.dart';
+import 'controller/specialties_controller.dart';
 
 class SpecialtiesPage extends StatefulWidget {
   @override
@@ -6,18 +8,26 @@ class SpecialtiesPage extends StatefulWidget {
 }
 
 class _SpecialtiesPageState extends State<SpecialtiesPage> {
-  final List<String> _specialties = [
-    'Cardiologia',
-    'Pediatria',
-    'Dermatologia',
-    'Ortopedia',
-    'Ginecologia',
-    'Neurologia',
-    'Oftalmologia',
-    'Psiquiatria',
-  ];
+  late final SpecialtiesController _controller;
+  String? _selectedSpecialtyId;
 
-  String? _selectedSpecialty;
+  @override
+  void initState() {
+    super.initState();
+    _controller = SpecialtiesController(SpecialtiesService());
+    _controller.addListener(_onControllerUpdate);
+    _controller.loadSpecialties();
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerUpdate);
+    super.dispose();
+  }
+
+  void _onControllerUpdate() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,46 +36,68 @@ class _SpecialtiesPageState extends State<SpecialtiesPage> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Especialidade',
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedSpecialty,
-                items:
-                    _specialties
-                        .map(
-                          (specialty) => DropdownMenuItem(
-                            value: specialty,
-                            child: Text(specialty),
-                          ),
-                        )
-                        .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSpecialty = value;
-                  });
-                },
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed:
-                    _selectedSpecialty == null
-                        ? null
-                        : () {
-                          Navigator.pushNamed(
-                            context,
-                            '/doctors',
-                            arguments: _selectedSpecialty,
-                          );
+          child:
+              _controller.isLoading
+                  ? CircularProgressIndicator()
+                  : _controller.error != null
+                  ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _controller.error!,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _controller.loadSpecialties,
+                        child: Text('Tentar novamente'),
+                      ),
+                    ],
+                  )
+                  : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Especialidade',
+                          border: OutlineInputBorder(),
+                        ),
+                        value: _selectedSpecialtyId,
+                        items:
+                            _controller.specialties
+                                .map(
+                                  (specialty) => DropdownMenuItem(
+                                    value: specialty.id,
+                                    child: Text(specialty.name),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSpecialtyId = value;
+                          });
                         },
-                child: Text('Confirmar'),
-              ),
-            ],
-          ),
+                      ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed:
+                            _selectedSpecialtyId == null
+                                ? null
+                                : () {
+                                  final selected = _controller.specialties
+                                      .firstWhere(
+                                        (s) => s.id == _selectedSpecialtyId,
+                                      );
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/doctors',
+                                    arguments: selected,
+                                  );
+                                },
+                        child: Text('Confirmar'),
+                      ),
+                    ],
+                  ),
         ),
       ),
     );
