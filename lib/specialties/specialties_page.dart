@@ -83,7 +83,7 @@ class _SpecialtiesPageState extends State<SpecialtiesPage> {
                         onPressed:
                             _selectedSpecialtyId == null
                                 ? null
-                                : () {
+                                : () async {
                                   final selected = _controller.specialties
                                       .firstWhere(
                                         (s) => s.id == _selectedSpecialtyId,
