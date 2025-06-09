@@ -1,83 +1,127 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class AppointmentsPage extends StatefulWidget {
-  final String? specialty;
-  final String? doctor;
+import 'controller/appointments_controller.dart';
+import 'services/appointments_services.dart';
+import 'models/appointment_model.dart';
+import 'package:clinic_scheduler_app/doctors/models/doctor_model.dart';
+import 'package:clinic_scheduler_app/specialties/models/specialty_model.dart';
+
+class AppointmentsPage extends StatelessWidget {
+  final SpecialtyModel? specialty;
+  final DoctorModel? doctor;
   const AppointmentsPage({Key? key, this.specialty, this.doctor})
     : super(key: key);
 
   @override
-  State<AppointmentsPage> createState() => _AppointmentsPageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create:
+          (_) =>
+              AppointmentsController(AppointmentsService())..loadAppointments(),
+      child: Builder(
+        builder:
+            (context) =>
+                _AppointmentsPageBody(specialty: specialty, doctor: doctor),
+      ),
+    );
+  }
 }
 
-class _AppointmentsPageState extends State<AppointmentsPage> {
-  DateTime? _selectedDate;
-  String? _specialty;
-  String? _doctor;
+class _AppointmentsPageBody extends StatefulWidget {
+  final SpecialtyModel? specialty;
+  final DoctorModel? doctor;
+  const _AppointmentsPageBody({Key? key, this.specialty, this.doctor})
+    : super(key: key);
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map) {
-      setState(() {
-        if (args['specialty'] is String) {
-          _specialty = args['specialty'];
-        }
-        if (args['doctor'] is String) {
-          _doctor = args['doctor'];
-        }
-      });
-    }
-  }
+  State<_AppointmentsPageBody> createState() => _AppointmentsPageBodyState();
+}
+
+class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
+  AppointmentModel? _selectedAppointment;
 
   @override
   Widget build(BuildContext context) {
+    final controller = Provider.of<AppointmentsController>(context);
     return Scaffold(
       appBar: AppBar(title: Text('Agendar Consulta')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_specialty != null)
-                Text(
-                  'Especialidade: $_specialty',
-                  style: TextStyle(fontSize: 16),
-                ),
-              if (_doctor != null)
-                Text('Doutor: $_doctor', style: TextStyle(fontSize: 16)),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(Duration(days: 60)),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _selectedDate = picked;
-                    });
-                  }
-                },
-                child: Text(
-                  _selectedDate == null
-                      ? 'Selecionar Data'
-                      : 'Data: ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                ),
+      body: Stack(
+        children: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.specialty != null)
+                    Text(
+                      'Especialidade: ${widget.specialty!.name}',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  if (widget.doctor != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: Text(
+                        'Doutor: ${widget.doctor!.name}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  SizedBox(height: 24),
+                  if (controller.isLoading) CircularProgressIndicator(),
+                  if (controller.error != null)
+                    Text(
+                      controller.error!,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  if (!controller.isLoading && controller.error == null)
+                    Expanded(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children:
+                            controller.appointments
+                                .where((a) => !a.booked)
+                                .map(
+                                  (
+                                    appointment,
+                                  ) => RadioListTile<AppointmentModel>(
+                                    title: Text(
+                                      'Data: ${appointment.date.day}/${appointment.date.month}/${appointment.date.year}',
+                                    ),
+                                    value: appointment,
+                                    groupValue: _selectedAppointment,
+                                    onChanged: (AppointmentModel? value) {
+                                      setState(() {
+                                        _selectedAppointment = value;
+                                      });
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ),
+                  SizedBox(height: 80), // Espaço para o botão flutuante
+                ],
               ),
-              SizedBox(height: 24),
-              ElevatedButton(
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              minimum: const EdgeInsets.only(left: 16, right: 16, bottom: 32),
+              child: ElevatedButton(
                 onPressed:
-                    (_selectedDate != null)
+                    _selectedAppointment != null
                         ? () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Consulta agendada para ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+                                'Consulta agendada para ${_selectedAppointment!.date.day}/${_selectedAppointment!.date.month}/${_selectedAppointment!.date.year}',
                               ),
                             ),
                           );
@@ -90,10 +134,16 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                         }
                         : null,
                 child: Text('Confirmar Agendamento'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

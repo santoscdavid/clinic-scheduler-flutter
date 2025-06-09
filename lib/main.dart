@@ -66,7 +66,18 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/specialties': (context) => SpecialtiesPage(),
         '/doctors': (context) => DoctorsPage(),
-        '/appointments': (context) => AppointmentsPage(),
+        '/appointments': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map &&
+              args['specialty'] != null &&
+              args['doctor'] != null) {
+            return AppointmentsPage(
+              specialty: args['specialty'],
+              doctor: args['doctor'],
+            );
+          }
+          return AppointmentsPage();
+        },
         '/historic': (context) => HistoricPage(),
       },
     );
