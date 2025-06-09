@@ -5,6 +5,12 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    String? userId;
+    if (args is Map && args['userId'] != null) {
+      final id = args['userId'];
+      userId = id is String ? id : id.toString();
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Bem-vindo!')),
       body: Center(
@@ -20,7 +26,11 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(color: Colors.white),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/specialties');
+                  Navigator.pushNamed(
+                    context,
+                    '/specialties',
+                    arguments: {'userId': userId},
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
@@ -36,7 +46,11 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(color: Colors.white),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/historic');
+                  Navigator.pushNamed(
+                    context,
+                    '/historic',
+                    arguments: {'userId': userId},
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),

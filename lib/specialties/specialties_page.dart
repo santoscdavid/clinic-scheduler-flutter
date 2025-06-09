@@ -3,6 +3,9 @@ import 'services/specialties_service.dart';
 import 'controller/specialties_controller.dart';
 
 class SpecialtiesPage extends StatefulWidget {
+  final String? userId;
+  SpecialtiesPage({Key? key, this.userId}) : super(key: key);
+
   @override
   _SpecialtiesPageState createState() => _SpecialtiesPageState();
 }
@@ -91,7 +94,10 @@ class _SpecialtiesPageState extends State<SpecialtiesPage> {
                                   Navigator.pushNamed(
                                     context,
                                     '/doctors',
-                                    arguments: selected,
+                                    arguments: {
+                                      'specialty': selected,
+                                      'userId': widget.userId,
+                                    },
                                   );
                                 },
                         child: Text('Confirmar'),

@@ -23,12 +23,16 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
       try {
         final result = await _authController.login(_email, _password, context);
-        // Exemplo: se o backend retorna um token
         if (result.containsKey('user')) {
+          final userId = result['user']['id'];
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login realizado com sucesso!')),
           );
-          Navigator.pushReplacementNamed(context, '/home');
+          Navigator.pushReplacementNamed(
+            context,
+            '/home',
+            arguments: {'userId': userId},
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

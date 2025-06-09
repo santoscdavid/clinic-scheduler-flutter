@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+
+import '../appointments/appointments_page.dart';
+import '../doctors/doctors_page.dart';
+import '../historic/historic_page.dart';
+import '../home_page.dart';
 import 'auth/login_page.dart';
 import 'auth/register_page.dart';
+import 'doctors/models/doctor_model.dart';
+import 'specialties/models/specialty_model.dart';
 import 'specialties/specialties_page.dart';
-import '../doctors/doctors_page.dart';
-import '../appointments/appointments_page.dart';
-import '../home_page.dart';
-import '../historic/historic_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -64,21 +67,52 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/home': (context) => const HomePage(),
-        '/specialties': (context) => SpecialtiesPage(),
-        '/doctors': (context) => DoctorsPage(),
-        '/appointments': (context) {
+        '/specialties': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is Map &&
-              args['specialty'] != null &&
-              args['doctor'] != null) {
-            return AppointmentsPage(
+          String? userId;
+          if (args is Map && args['userId'] != null) {
+            userId = args['userId'] as String;
+          }
+          return SpecialtiesPage(userId: userId);
+        },
+        '/doctors': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map && args['specialty'] != null) {
+            return DoctorsPage(
               specialty: args['specialty'],
-              doctor: args['doctor'],
+              userId: args['userId'],
             );
           }
-          return AppointmentsPage();
+          // fallback: pode mostrar erro ou retornar uma tela vazia
+          return Scaffold(
+            appBar: AppBar(title: Text('Erro')),
+            body: Center(child: Text('Especialidade não informada!')),
+          );
         },
-        '/historic': (context) => HistoricPage(),
+        '/appointments': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          String? userId;
+          SpecialtyModel? specialty;
+          DoctorModel? doctor;
+          if (args is Map) {
+            userId = args['userId'] as String?;
+            specialty = args['specialty'] as SpecialtyModel?;
+            doctor = args['doctor'] as DoctorModel?;
+          }
+          return AppointmentsPage(
+            specialty: specialty,
+            doctor: doctor,
+            userId: userId,
+          );
+        },
+        '/historic': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          String? userId;
+          if (args is Map && args['userId'] != null) {
+            userId = args['userId'] as String;
+          }
+          return HistoricPage(userId: userId);
+        },
       },
     );
   }

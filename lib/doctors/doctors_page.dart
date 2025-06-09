@@ -4,7 +4,10 @@ import 'controller/doctors_controller.dart';
 import 'services/doctors_service.dart';
 
 class DoctorsPage extends StatefulWidget {
-  const DoctorsPage({Key? key}) : super(key: key);
+  final SpecialtyModel specialty;
+  final String? userId;
+  const DoctorsPage({Key? key, required this.specialty, this.userId})
+    : super(key: key);
 
   @override
   State<DoctorsPage> createState() => _DoctorsPageState();
@@ -13,24 +16,17 @@ class DoctorsPage extends StatefulWidget {
 class _DoctorsPageState extends State<DoctorsPage> {
   late final DoctorsController _controller;
   String? _selectedDoctorId;
-  SpecialtyModel? _specialty;
   bool _listenerAdded = false;
 
   @override
   void initState() {
     super.initState();
     _controller = DoctorsController(DoctorsService());
-    Future.microtask(() {
-      final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is SpecialtyModel) {
-        _specialty = args;
-        if (!_listenerAdded) {
-          _controller.addListener(_onControllerUpdate);
-          _listenerAdded = true;
-        }
-        _controller.loadDoctors(specialtyId: _specialty!.id);
-      }
-    });
+    if (!_listenerAdded) {
+      _controller.addListener(_onControllerUpdate);
+      _listenerAdded = true;
+    }
+    _controller.loadDoctors(specialtyId: widget.specialty.id);
   }
 
   @override
@@ -67,7 +63,7 @@ class _DoctorsPageState extends State<DoctorsPage> {
                       ElevatedButton(
                         onPressed:
                             () => _controller.loadDoctors(
-                              specialtyId: _specialty?.id,
+                              specialtyId: widget.specialty.id,
                             ),
                         child: Text('Tentar novamente'),
                       ),
@@ -76,11 +72,10 @@ class _DoctorsPageState extends State<DoctorsPage> {
                   : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (_specialty != null)
-                        Text(
-                          'Especialidade: ${_specialty!.name}',
-                          style: TextStyle(fontSize: 18),
-                        ),
+                      Text(
+                        'Especialidade: ${widget.specialty.name}',
+                        style: TextStyle(fontSize: 18),
+                      ),
                       SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
@@ -92,8 +87,8 @@ class _DoctorsPageState extends State<DoctorsPage> {
                             _controller.doctors
                                 .where(
                                   (doctor) =>
-                                      _specialty == null ||
-                                      doctor.specialty.id == _specialty!.id,
+                                      doctor.specialty.id ==
+                                      widget.specialty.id,
                                 )
                                 .map(
                                   (doctor) => DropdownMenuItem(
@@ -122,8 +117,9 @@ class _DoctorsPageState extends State<DoctorsPage> {
                                     context,
                                     '/appointments',
                                     arguments: {
-                                      'specialty': _specialty,
+                                      'specialty': widget.specialty,
                                       'doctor': selectedDoctor,
+                                      'userId': widget.userId,
                                     },
                                   );
                                 },

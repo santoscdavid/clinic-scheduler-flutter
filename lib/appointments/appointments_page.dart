@@ -10,7 +10,8 @@ import 'package:clinic_scheduler_app/specialties/models/specialty_model.dart';
 class AppointmentsPage extends StatelessWidget {
   final SpecialtyModel? specialty;
   final DoctorModel? doctor;
-  const AppointmentsPage({Key? key, this.specialty, this.doctor})
+  final String? userId;
+  const AppointmentsPage({Key? key, this.specialty, this.doctor, this.userId})
     : super(key: key);
 
   @override
@@ -21,8 +22,11 @@ class AppointmentsPage extends StatelessWidget {
               AppointmentsController(AppointmentsService())..loadAppointments(),
       child: Builder(
         builder:
-            (context) =>
-                _AppointmentsPageBody(specialty: specialty, doctor: doctor),
+            (context) => _AppointmentsPageBody(
+              specialty: specialty,
+              doctor: doctor,
+              userId: userId,
+            ),
       ),
     );
   }
@@ -31,8 +35,13 @@ class AppointmentsPage extends StatelessWidget {
 class _AppointmentsPageBody extends StatefulWidget {
   final SpecialtyModel? specialty;
   final DoctorModel? doctor;
-  const _AppointmentsPageBody({Key? key, this.specialty, this.doctor})
-    : super(key: key);
+  final String? userId;
+  const _AppointmentsPageBody({
+    Key? key,
+    this.specialty,
+    this.doctor,
+    this.userId,
+  }) : super(key: key);
 
   @override
   State<_AppointmentsPageBody> createState() => _AppointmentsPageBodyState();
@@ -40,6 +49,35 @@ class _AppointmentsPageBody extends StatefulWidget {
 
 class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
   AppointmentModel? _selectedAppointment;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Garante que userId está presente, senão mostra erro
+    if (widget.userId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Text('Erro'),
+                content: Text(
+                  'Usuário não identificado. Faça login novamente.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pushReplacementNamed('/');
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +141,7 @@ class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
                                 .toList(),
                       ),
                     ),
-                  SizedBox(height: 80), // Espaço para o botão flutuante
+                  SizedBox(height: 80),
                 ],
               ),
             ),
@@ -117,29 +155,52 @@ class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
               child: ElevatedButton(
                 onPressed:
                     _selectedAppointment != null
-                        ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Consulta agendada para ${_selectedAppointment!.date.day}/${_selectedAppointment!.date.month}/${_selectedAppointment!.date.year}',
-                              ),
-                            ),
+                        ? () async {
+                          if (widget.userId == null) return;
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder:
+                                (context) =>
+                                    Center(child: CircularProgressIndicator()),
                           );
-                          Future.delayed(const Duration(seconds: 1), () {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/historic',
+                          final success = await controller.bookAppointment(
+                            appointmentId: _selectedAppointment!.id,
+                            userId: widget.userId!,
+                          );
+                          Navigator.of(context, rootNavigator: true).pop();
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Consulta agendada para ${_selectedAppointment!.date.day}/${_selectedAppointment!.date.month}/${_selectedAppointment!.date.year}',
+                                ),
+                              ),
                             );
-                          });
+                            Future.delayed(const Duration(seconds: 1), () {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/historic',
+                                arguments: {'userId': widget.userId},
+                              );
+                            });
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Erro ao agendar consulta'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                         : null,
-                child: Text('Confirmar Agendamento'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                child: Text('Confirmar Agendamento'),
               ),
             ),
           ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class HistoricPage extends StatelessWidget {
-  const HistoricPage({Key? key}) : super(key: key);
+  final String? userId;
+  const HistoricPage({Key? key, this.userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
