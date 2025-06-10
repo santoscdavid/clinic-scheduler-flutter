@@ -60,6 +60,10 @@ class _SpecialtiesPageState extends State<SpecialtiesPage> {
                   : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Image.asset(
+                        'assets/images/img_specialties.png',
+                        height: 200,
+                      ),
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'Especialidade',

@@ -93,6 +93,7 @@ class _AppointmentsPageBodyState extends State<_AppointmentsPageBody> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Image.asset('assets/images/img_specialties.png', height: 200),
                   if (widget.specialty != null)
                     Text(
                       'Especialidade: ${widget.specialty!.name}',

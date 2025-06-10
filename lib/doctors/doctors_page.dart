@@ -72,10 +72,15 @@ class _DoctorsPageState extends State<DoctorsPage> {
                   : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Especialidade: ${widget.specialty.name}',
-                        style: TextStyle(fontSize: 18),
+                      Image.asset(
+                        'assets/images/img_specialties.png',
+                        height: 200,
                       ),
+                      if (widget.specialty.name.isNotEmpty)
+                        Text(
+                          'Especialidade: ${widget.specialty.name}',
+                          style: TextStyle(fontSize: 18),
+                        ),
                       SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(

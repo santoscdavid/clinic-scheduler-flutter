@@ -19,6 +19,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Image.asset('assets/images/img_specialties.png', height: 200),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add_circle_outline, color: Colors.white),
                 label: const Text(
